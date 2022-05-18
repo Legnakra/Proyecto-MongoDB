@@ -1,0 +1,63 @@
+// 1. Seleccionar fichero json que incluya todos los tipos de datos soportados en mongo db.
+    name.json
+
+// 2. Importar los documentos en mongo db.
+    mongoimport --db <name-db> --collection users --type <type-file> --file <name-file> --jsonArray
+
+// 3. Insertar varios documentos utuliando los dos métodos de inserción de MongoDB*/
+    // a. Inserta el año 2023.
+        db.nobel.insertOne ({"year":"2022"});
+    // b. Inserta en el año 2022 los siguientes datos:
+        // Categoría: Peace
+            // ID: 10001, Firstname: David, Surname: Attenbourouhgh, Motivation: "I wish the world was twice as big - and half of it was still unexplored.", Share: 2
+            // ID: 10002, Firstname: Sviatlana, Surname: Tsikhanouskaya, Motivation: "I am not in politics for power. I am in it for justice."," Share: 2.
+        // Categoría: Economics
+            //ID: 20002, Firstname:"Dennis",Surname: "Sullivan", Motivation: "\"We can all be heroic. I mean, not necessarily by literally fighting crime, but just by doing the right thing.",share: "1".
+                db.nobel.insertMany ([ {year:"2022",category:"Peace",laureates: [{id: "10001",firstname: "David",surname: "Attenbourouhgh",motivation: "\"I wish the world was twice as big - and half of it was still unexplored.\"",share: "2"},{id: "10002",firstname: "Sviatlana",surname: "Tsikhanouskaya",motivation: "\"I am not in politics for power. I am in it for justice.\"",share: "2"}]}, {year:"2022",category:"Economics",laureates: [{id: "20002",firstname: "Dennis",surname: "Sullivan",motivation: "\"We can all be heroic. I mean, not necessarily by literally fighting crime, but just by doing the right thing.\"",share: "1"}]}]);
+
+// 4. Eliminar varios documentos utuliando los dos métodos de eliminación de MongoDB*/
+    // a. Elimina la categoría Medicine del año 1901.
+        db.nobel.deleteOne({year:"1901",category:"Medicine"});
+    // b. Elimina el año 2022.
+        db.nobel.deleteMany ({"year":"2022"});
+
+// 5. Actualiza varios documentos utilizando los tres métodos de actualización de MongoDB*/
+    // a. Actualiza el año 2023 incluyendo la categoría Economics.
+        db.nobel.updateOne({"year":"2023"},{$set:{"category":"Economics"}});
+    // b. Actualiza el año 1902, traduciendo al castellano la categoría Peace.
+        db.nobel.updateMany ({"year":"1902","category":"Peace"},{$set:{"year":"1902","category":"Paz"}});
+    // c. Reemplaza el año 2023 por el año 2023 con la categoría Economics.
+        db.nobel.replaceOne({"year":"2023"},{year:"2023",category:"Economics"});
+
+// 6. Consultas:
+    // a. Consultas de datos simples:
+        // 1. Muestra los galardonados de la categoría de Economía.
+        db.nobel.find({"category":"Economics"});
+        // 2.Muestra los premiados de los años menores a 1920
+        db.nobel.find({"year":{$lt:"1920"}});
+        // 3. Muestra los premiados de los años entre 1921 y 1923
+        db.nobel.find({"year":{$gt:"1921","$lt":"1923"}});
+        // 4. Muestra los premiados de la categoría de Economía y de la categoría de Paz.
+        db.nobel.find({"category":{$in:["Literatura","Paz"]}});
+        // 5. Muestra los premiados de la categoría de Literatura, ordenados por año de forma ascendente.
+        db.nobel.find({"category":"Literatura"}).sort({"year":1});
+
+    // b. Consultas con arrays.
+        // 1. Muestra los nombres de los premiados de la categoría Chemistry del año 1949.
+            db.nobel.find({"category":"Chemistry","year":"1949"},{firstname:1,surname:1});
+        // 2. Muestra las categorías de los premiados cuyo nombre sea David.
+            db.nobel.find({"laureates.firstname":"David"},{"laureates.motivation":1});
+        // 3. Muestra los premiados de Chemistry y Medicine del año 1950.
+            db.nobel.find({"category":{$in:["Chemistry","Medicine"]},"year":"1950"});
+    
+    // c. Consultas con documentos embebidos.
+        // 1. Muestra la motivación del Premiado Pablo Neruda.
+            db.nobel.find({"$or":[{"laureates.firstname":"Pablo"},{"laureates.surname":"Neruda"}]});
+        // 2. Muestra el número total de premiados desde 1982 de la categoría Physycs que han compartido el premio con otro premiado.
+            db.nobel.find({"year":{$gt:"1982"},"category"="Physics"},{"laureates.share":"2"}).count();
+        // 3. Cuenta los premiados del año 1932 de la categoría Peace que su firstname comience por la letra A.
+            db.nobel.find({"year":"1932","category":"Peace"},{"laureates.firstname":"/^A/"}).count();
+            
+    // d.Consulta de agrupación.
+        // 1. Muestra la categoría y el número de premiados de cada categoría.
+            db.nobel.aggregate([{$group:{_id:"$category",count:{$sum:1}}}]);
